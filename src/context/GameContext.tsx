@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { LeaderboardRecord, loadLeaderboard, saveRecord } from '../utils/leaderboard';
 
 export type GameState = 'idle' | 'countdown' | 'playing' | 'paused' | 'done';
@@ -8,6 +8,8 @@ interface GameContextValue {
   setGameState: (s: GameState) => void;
   elapsedMs: number;
   setElapsedMs: (ms: number) => void;
+  wrongCount: number;
+  setWrongCount: (n: number) => void;
   leaderboard: LeaderboardRecord[];
   refreshLeaderboard: () => Promise<void>;
   saveGameRecord: (ms: number) => Promise<void>;
@@ -19,6 +21,7 @@ const GameContext = createContext<GameContextValue | null>(null);
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [gameState, setGameState] = useState<GameState>('idle');
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardRecord[]>([]);
   const [lastRecordMs, setLastRecordMs] = useState(0);
 
@@ -40,6 +43,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setGameState,
         elapsedMs,
         setElapsedMs,
+        wrongCount,
+        setWrongCount,
         leaderboard,
         refreshLeaderboard,
         saveGameRecord,

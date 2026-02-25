@@ -31,23 +31,33 @@ function formatTime(ms: number): string {
 }
 
 export const GameScreen: React.FC<Props> = ({ navigation }) => {
-  const { gameState, setGameState, saveGameRecord, setElapsedMs } = useGameContext();
+  const { gameState, setGameState, saveGameRecord, setElapsedMs, setWrongCount, leaderboard } = useGameContext();
   const { elapsedMs, start, pause, resume, stop } = useTimer();
   const gameDoneRef = useRef(false);
+  // Ref to capture elapsedMs without adding it to handleGameDone's deps.
+  // Avoids recreating handleGameDone (and handleNumberPress) on every RAF tick.
+  const elapsedMsRef = useRef(0);
+  useEffect(() => {
+    elapsedMsRef.current = elapsedMs;
+  }, [elapsedMs]);
+
+  const bestMs = leaderboard.length > 0 ? leaderboard[0].ms : null;
 
   const handleGameDone = useCallback(() => {
     if (gameDoneRef.current) return;
     gameDoneRef.current = true;
     stop();
-    setElapsedMs(elapsedMs);
+    const finalMs = elapsedMsRef.current;
+    setElapsedMs(finalMs);
     setGameState('done');
-  }, [stop, elapsedMs, setElapsedMs, setGameState]);
+  }, [stop, setElapsedMs, setGameState]);
 
   const {
     targetNumber,
     gridPositions,
     flash,
     progress,
+    wrongCount,
     initGame,
     handleNumberPress,
   } = useGameLogic(handleGameDone);
@@ -66,7 +76,8 @@ export const GameScreen: React.FC<Props> = ({ navigation }) => {
   // Navigate to result when done
   useEffect(() => {
     if (gameState === 'done') {
-      saveGameRecord(elapsedMs).then(() => {
+      setWrongCount(wrongCount);
+      saveGameRecord(elapsedMsRef.current).then(() => {
         navigation.replace('Result');
       });
     }
@@ -109,7 +120,7 @@ export const GameScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={styles.timerArea}>
           <Text style={styles.clockIcon}>⏱</Text>
-          <Text style={styles.timerText}>{formatTime(elapsedMs)}s</Text>
+          <Text style={styles.timerText}>{formatTime(elapsedMs)}</Text>
         </View>
 
         <TouchableOpacity
@@ -123,18 +134,36 @@ export const GameScreen: React.FC<Props> = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Progress Bar */}
-      <View style={styles.progressRow}>
-        <Text style={styles.hintText}>
-          다음: <Text style={styles.hintNum}>{targetNumber}</Text>
-        </Text>
-        <View style={styles.progressBarBg}>
-          <View
-            style={[styles.progressBarFill, { width: `${(progress / 50) * 100}%` }]}
-          />
+      {/* Target + Stats Row */}
+      <View style={styles.statsRow}>
+        <View style={styles.targetBox}>
+          <Text style={styles.targetLabel}>NEXT</Text>
+          <Text style={styles.targetNum}>{targetNumber}</Text>
         </View>
-        <Text style={styles.progressText}>{progress}/50</Text>
+
+        <View style={styles.centerStats}>
+          <View style={styles.progressBarBg}>
+            <View
+              style={[styles.progressBarFill, { width: `${(progress / 50) * 100}%` }]}
+            />
+          </View>
+          <Text style={styles.progressText}>{progress} / 50</Text>
+        </View>
+
+        <View style={styles.wrongBox}>
+          <Text style={styles.wrongLabel}>MISS</Text>
+          <Text style={styles.wrongNum}>{wrongCount}</Text>
+        </View>
       </View>
+
+      {/* Best time hint */}
+      {bestMs !== null && (
+        <View style={styles.bestRow}>
+          <Text style={styles.bestText}>
+            Best: <Text style={styles.bestVal}>{formatTime(bestMs)}</Text>
+          </Text>
+        </View>
+      )}
 
       {/* Grid */}
       <View style={styles.gridWrapper}>
@@ -193,48 +222,102 @@ const styles = StyleSheet.create({
     marginRight: 4,
   } as TextStyle,
   timerText: {
-    fontSize: 24,
+    fontSize: 26,
     color: '#FFFFFF',
     fontFamily: 'monospace' as any,
     fontWeight: 'bold',
     minWidth: 100,
     textAlign: 'center',
   } as TextStyle,
-  progressRow: {
+  // Stats row (target | progress | miss)
+  statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1A2A3A',
   } as ViewStyle,
-  hintText: {
-    color: '#AAAAAA',
-    fontSize: 14,
-    minWidth: 60,
+  targetBox: {
+    alignItems: 'center',
+    minWidth: 52,
+    backgroundColor: '#1A3A5C',
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: '#3B9EFF',
+  } as ViewStyle,
+  targetLabel: {
+    color: '#7AB8FF',
+    fontSize: 9,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   } as TextStyle,
-  hintNum: {
+  targetNum: {
     color: '#FFFFFF',
+    fontSize: 28,
     fontWeight: 'bold',
     fontFamily: 'monospace' as any,
+    lineHeight: 32,
   } as TextStyle,
-  progressBarBg: {
+  centerStats: {
     flex: 1,
-    height: 8,
+    gap: 4,
+  } as ViewStyle,
+  progressBarBg: {
+    height: 10,
     backgroundColor: '#1E2D3D',
-    borderRadius: 4,
+    borderRadius: 5,
     overflow: 'hidden',
   } as ViewStyle,
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#1A56A0',
-    borderRadius: 4,
+    backgroundColor: '#3B9EFF',
+    borderRadius: 5,
   } as ViewStyle,
   progressText: {
-    color: '#AAAAAA',
-    fontSize: 13,
-    minWidth: 36,
-    textAlign: 'right',
+    color: '#888888',
+    fontSize: 12,
+    textAlign: 'center',
     fontFamily: 'monospace' as any,
+  } as TextStyle,
+  wrongBox: {
+    alignItems: 'center',
+    minWidth: 52,
+    backgroundColor: '#3A1A1A',
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: '#FF5555',
+  } as ViewStyle,
+  wrongLabel: {
+    color: '#FF9999',
+    fontSize: 9,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  } as TextStyle,
+  wrongNum: {
+    color: '#FF5555',
+    fontSize: 28,
+    fontWeight: 'bold',
+    fontFamily: 'monospace' as any,
+    lineHeight: 32,
+  } as TextStyle,
+  bestRow: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  } as ViewStyle,
+  bestText: {
+    color: '#555555',
+    fontSize: 12,
+  } as TextStyle,
+  bestVal: {
+    color: '#FFD700',
+    fontFamily: 'monospace' as any,
+    fontWeight: 'bold',
   } as TextStyle,
   gridWrapper: {
     flex: 1,

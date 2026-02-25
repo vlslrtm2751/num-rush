@@ -18,6 +18,7 @@ export interface GameLogicState {
   lastDisplayedNumber: number;
   flash: ButtonFlash | null;
   progress: number;
+  wrongCount: number;
   initGame: () => void;
   handleNumberPress: (num: number) => void;
 }
@@ -29,6 +30,7 @@ export function useGameLogic(onGameDone: () => void): GameLogicState {
   const [lastDisplayedNumber, setLastDisplayedNumber] = useState(INITIAL_DISPLAY_COUNT);
   const [flash, setFlash] = useState<ButtonFlash | null>(null);
   const [progress, setProgress] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const initGame = useCallback(() => {
@@ -45,6 +47,7 @@ export function useGameLogic(onGameDone: () => void): GameLogicState {
     setLastDisplayedNumber(INITIAL_DISPLAY_COUNT);
     setFlash(null);
     setProgress(0);
+    setWrongCount(0);
   }, []);
 
   const handleNumberPress = useCallback(
@@ -98,6 +101,7 @@ export function useGameLogic(onGameDone: () => void): GameLogicState {
         }, 100);
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setWrongCount((c) => c + 1);
         setFlash({ number: num, type: 'wrong' });
         flashTimeoutRef.current = setTimeout(() => {
           flashTimeoutRef.current = null;
@@ -115,6 +119,7 @@ export function useGameLogic(onGameDone: () => void): GameLogicState {
     lastDisplayedNumber,
     flash,
     progress,
+    wrongCount,
     initGame,
     handleNumberPress,
   };

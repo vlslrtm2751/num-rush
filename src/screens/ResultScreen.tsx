@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -27,7 +27,7 @@ function formatTime(ms: number): string {
 }
 
 export const ResultScreen: React.FC<Props> = ({ navigation }) => {
-  const { elapsedMs, leaderboard, lastRecordMs } = useGameContext();
+  const { elapsedMs, leaderboard, lastRecordMs, wrongCount } = useGameContext();
   const displayMs = lastRecordMs || elapsedMs;
 
   const bestMs = leaderboard.length > 0 ? leaderboard[0].ms : displayMs;
@@ -58,6 +58,12 @@ export const ResultScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>RANK</Text>
             <Text style={styles.statValue}>#{rank}</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>MISS</Text>
+            <Text style={[styles.statValue, wrongCount > 0 && styles.statValueMiss]}>
+              {wrongCount}
+            </Text>
           </View>
         </View>
       </View>
@@ -165,6 +171,9 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     fontFamily: 'monospace' as any,
+  } as TextStyle,
+  statValueMiss: {
+    color: '#FF5555',
   } as TextStyle,
   btnArea: {
     width: '100%',
