@@ -65,10 +65,16 @@ export function useGameLogic(onGameDone: () => void): GameLogicState {
             const next = [...prev];
             const idx = next.indexOf(num);
             if (idx !== -1) {
-              // Place next number if available
               const nextNum = lastDisplayedNumber + 1;
               if (nextNum <= TOTAL_NUMBERS) {
-                next[idx] = nextNum;
+                // Collect all empty slots (0) + the slot being freed
+                const available: number[] = [];
+                for (let i = 0; i < next.length; i++) {
+                  if (next[i] === 0 || i === idx) available.push(i);
+                }
+                const randomIdx = available[Math.floor(Math.random() * available.length)];
+                next[idx] = 0;             // clear tapped slot
+                next[randomIdx] = nextNum; // place new number at random empty slot
               } else {
                 next[idx] = 0;
               }
