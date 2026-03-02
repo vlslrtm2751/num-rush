@@ -13,6 +13,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { MusicToggle } from '../components/MusicToggle';
 import { RootStackParamList } from '../../App';
 import { useGameContext } from '../context/GameContext';
+import { shuffle } from '../utils/shuffle';
 
 type HomeScreenNavProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -20,12 +21,14 @@ interface Props {
   navigation: HomeScreenNavProp;
 }
 
-const ANIMATED_NUMS = ['1', '3', '7', '2', '9', '4'];
-
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const { refreshLeaderboard } = useGameContext();
+  // 마운트마다 1~9 중 겹치지 않는 랜덤 6개 생성
+  const animatedNums = useRef(
+    shuffle(['1','2','3','4','5','6','7','8','9']).slice(0, 6)
+  ).current;
   const animValues = useRef(
-    ANIMATED_NUMS.map(() => new Animated.Value(0))
+    animatedNums.map(() => new Animated.Value(0))
   ).current;
 
   useEffect(() => {
@@ -60,7 +63,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
       <View style={styles.logoArea}>
         <View style={styles.numRow}>
-          {ANIMATED_NUMS.map((n, i) => (
+          {animatedNums.map((n, i) => (
             <Animated.Text
               key={i}
               style={[
