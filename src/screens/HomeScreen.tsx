@@ -110,7 +110,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.version}>v1.0.0</Text>
+      <Text style={styles.version}>2026-03-03 - 1</Text>
     </SafeAreaView>
   );
 };
