@@ -14,6 +14,7 @@ import { MusicToggle } from '../components/MusicToggle';
 import { RootStackParamList } from '../../App';
 import { useGameContext } from '../context/GameContext';
 import { shuffle } from '../utils/shuffle';
+import { APP_VERSION } from '../version';
 
 type HomeScreenNavProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -110,7 +111,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.version}>2026-03-03 - 1</Text>
+      <Text style={styles.version}>{APP_VERSION}</Text>
     </SafeAreaView>
   );
 };

@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 태그 포함 전체 히스토리 fetch
 
       - name: Setup Node
         uses: actions/setup-node@v4
